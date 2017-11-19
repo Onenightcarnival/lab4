@@ -1,6 +1,11 @@
 #include <gtest/gtest.h>
 #include "../src/my_malloc.h"
 
+TEST(FreeListTest, PrintList){
+    reset_heap();
+    print_free_list();
+}
+
 TEST(MallocTest, InitAndCheckAvailableMemory) {
     reset_heap();
     size_t size = available_memory();

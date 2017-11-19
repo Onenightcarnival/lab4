@@ -83,6 +83,24 @@ void print_free_list() {
 //
 void find_free(size_t size, node_t **found, node_t **previous) {
 	// TODO
+  node_t *lst = free_list();
+  while(lst->next){
+    if(lst->size >= size){
+      *found = lst;
+      return;
+    }
+    else{
+      *previous = lst;
+      lst = lst->next;
+    }
+  }
+  if(lst->size >= size){
+    *found = lst;
+    return;
+  }
+  else{
+    return;
+  }
 }
 
 // Splits a found free node to accommodate an allocation request.
@@ -103,6 +121,7 @@ void find_free(size_t size, node_t **found, node_t **previous) {
 void split(size_t size, node_t **previous, node_t **free_block, header_t **allocated) {
   assert(*free_block != NULL);
 	// TODO
+  
 }
 
 // Returns a pointer to a region of memory having at least the request `size` bytes.
