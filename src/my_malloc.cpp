@@ -83,12 +83,12 @@ void print_free_list() {
 //
 void find_free(size_t size, node_t **found, node_t **previous) {
 	// TODO
-  size_t total = available_memory();
-  if(total < size + sizeof(header_t)){
-  	return;
-  }
-  node_t *p = free_list();
+  node_t *p = heap();
   if(p == NULL){
+    return;
+  }
+  size_t total = available_memory();
+  if(total < size){
   	return;
   }
   while(p != NULL){
@@ -97,11 +97,10 @@ void find_free(size_t size, node_t **found, node_t **previous) {
   		return;
   	}
   	else{
-  		*previous = p;
+  		previous = &p;
   		p = p->next;
   	}
   }
-  return;
 }
 
 // Splits a found free node to accommodate an allocation request.
@@ -122,31 +121,20 @@ void find_free(size_t size, node_t **found, node_t **previous) {
 void split(size_t size, node_t **previous, node_t **free_block, header_t **allocated) {
   assert(*free_block != NULL);
 	// TODO
-  //check if there's enough space in the free_block
-  if((*free_block)->size < size + sizeof(node_t)){
-  	return;
-  }
-  //copy the original pointer
-  node_t *p = *free_block;
-  //number of bytes that need to allocate
   size_t actual_size = size + sizeof(header_t);
-  //adjust free_block
+  size_t origine = (*free_block)->size;
   *free_block = (node_t *)(((char *)*free_block) + actual_size);
-  //update the size in free_block
-  (*free_block)->size -= (size + sizeof(node_t));
-  //assign to *allocated the pointer to the start of the original free block
-  *allocated = (header_t*)p;
-  //if pre is NULL
+  (*free_block)->size = origine - (size + sizeof(node_t));
   if(*previous == NULL){
-  	head = *free_block;
+    node_t* cp = head;
+    head = *free_block;
+    *allocated = (header_t*)cp;
   }
-  //if not, link the pre to the new free_block node
   else{
-  	(*previous)->next = *free_block;
+    (*previous)->next =*free_block;
+    *allocated = (header_t*)free_block;
   }
-  //update magic
   (*allocated)->magic = MAGIC;
-  //update size
   (*allocated)->size = size;
 }
 
@@ -169,7 +157,7 @@ void *my_malloc(size_t size) {
   }
   else{
   	split(size, &previous, &found, &allocated);
-  	allocated = (header_t *)(((char *)allocated) + sizeof(header_t));
+  	allocated = (header_t *)((char *)allocated + sizeof(header_t));
   	return allocated;
   }
 }
@@ -184,24 +172,23 @@ void *my_malloc(size_t size) {
 //
 void coalesce(node_t *free_block) {
   // TODO
-	size_t block_size = free_block->size + sizeof(node_t);
-	node_t *n = free_block->next;
-	if(((char *)free_block) + block_size == (char *)n){
-		if(n->next){
-			node_t *temp = n->next;
-			free_block->next = temp;
-			free_block->size += n->size + sizeof(node_t);
-			return;
-		}
-		else{
-			free_block->next = NULL;
-			free_block->size += n->size + sizeof(node_t);
-			return;
-		}
-	}
-	else{
-		return;
-	}
+  //while(free_block->next){
+    size_t block_size = free_block->size + sizeof(node_t);
+    node_t *n = free_block->next;
+    if(((char *)free_block) + block_size == (char *)n){
+        free_block->size += n->size + sizeof(node_t);
+        //if(n->next == NULL){
+          //free_block->next = NULL;
+          //return;
+        //}
+        //else{
+          free_block->next = n->next;
+        //}
+    }
+    //else{
+    //  return;
+    //}
+  //}
 }
 
 // Frees a given region of memory back to the free list.
